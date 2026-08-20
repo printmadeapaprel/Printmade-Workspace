@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Printmade — Hat Decoration Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f3ef;--surface:#fff;--border:#e2ddd6;--border-strong:#c8c2b8;
+    --text:#1a1814;--text-muted:#7a7468;--text-faint:#b0aa9f;
+    --accent:#2d5a3d;--accent-light:#e8f0eb;--accent-text:#1e3e2a;
+    --brand-gold-light:#fdf0b0;--brand-black:#111;--brand-teal:#00bcd4;
+    --emb-accent:#2d5a3d;--emb-accent-light:#e8f0eb;--emb-accent-text:#1e3e2a;
+    --lth-accent:#7a4a1e;--lth-accent-light:#f5ece3;--lth-accent-text:#5a3412;
+    --ptch-accent:#1a5276;--ptch-accent-light:#d6eaf8;--ptch-accent-text:#154360;
+    --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+    --brand-font:'Bebas Neue',sans-serif;
+    --radius:6px;--radius-lg:10px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;line-height:1.5;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:10;}
+  .logo{font-family:var(--brand-font);font-size:22px;color:var(--brand-black);letter-spacing:.05em;}
+  .header-sep{color:var(--border-strong);margin:0 4px;}
+  .header-title{font-size:12px;color:var(--text-muted);}
+  .main{max-width:960px;margin:0 auto;padding:24px 20px 60px;}
+  .tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:4px;width:fit-content;}
+  .tab{padding:7px 20px;border-radius:var(--radius);border:none;background:transparent;cursor:pointer;font-family:var(--sans);font-size:13px;color:var(--text-muted);transition:all .15s;font-weight:500;}
+  .tab:hover{color:var(--text);background:var(--bg);}
+  .tab.active.emb{background:var(--emb-accent);color:#fff;}
+  .tab.active.lth{background:var(--lth-accent);color:#fff;}
+  .tab.active.ptch{background:var(--ptch-accent);color:#fff;}
+  .panel{display:none;}.panel.active{display:block;}
+  .sub-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);}
+  .sub-tab{padding:6px 16px;border-radius:var(--radius) var(--radius) 0 0;border:1px solid transparent;background:transparent;cursor:pointer;font-family:var(--sans);font-size:12px;color:var(--text-muted);transition:all .15s;border-bottom:none;margin-bottom:-1px;}
+  .sub-tab:hover{color:var(--text);}
+  .sub-tab.active{background:var(--surface);border-color:var(--border);border-bottom-color:var(--surface);color:var(--text);font-weight:500;}
+  .sub-panel{display:none;}.sub-panel.active{display:block;}
+  .calc-layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
+  @media(max-width:780px){.calc-layout{grid-template-columns:1fr;}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:14px;}
+  .card-title{font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:14px;font-weight:500;}
+  .field-stack{display:flex;flex-direction:column;gap:10px;}
+  .field label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;}
+  .field input,.field select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--sans);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none;}
+  .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7468' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
+  .field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(45,90,61,.07);}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .tier-edit-row{display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .tier-chip{display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:4px 6px 4px 8px;}
+  .tier-chip input{width:46px;border:none;background:transparent;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;padding:0;font-weight:500;}
+  .tier-chip .tier-lbl{font-size:9px;color:var(--text-faint);font-family:var(--mono);}
+  .tier-chip .rm{cursor:pointer;color:var(--text-faint);font-size:13px;line-height:1;border:none;background:none;padding:0 1px;transition:color .1s;}
+  .tier-chip .rm:hover{color:#c0392b;}
+  .btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;}
+  .btn{padding:9px 20px;border-radius:var(--radius);border:1px solid var(--border);font-family:var(--sans);font-size:13px;cursor:pointer;font-weight:500;transition:all .15s;background:var(--surface);color:var(--text);}
+  .btn:hover{background:var(--bg);border-color:var(--border-strong);}
+  .btn-sm{padding:5px 12px;font-size:11px;font-weight:400;color:var(--text-muted);}
+  .link-btn{background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:var(--sans);text-decoration:underline;text-underline-offset:2px;padding:0;}
+  .link-btn:hover{color:var(--text);}
+  .summary-strip{display:flex;gap:20px;flex-wrap:wrap;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);}
+  .summary-item{display:flex;flex-direction:column;gap:1px;position:relative;}
+  .summary-label{font-size:9px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+  .summary-val{font-size:13px;font-weight:500;font-family:var(--mono);color:var(--text-muted);}
+  .summary-sep{width:1px;background:var(--border);align-self:stretch;margin:0 4px;}
+  .tip-trigger{position:relative;cursor:help;font-size:9px;border-bottom:1px dotted var(--text-faint);padding:0 1px;}
+  .tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--brand-black);color:#fff;font-size:11px;font-family:var(--sans);font-weight:400;text-transform:none;letter-spacing:0;line-height:1.5;padding:7px 10px;border-radius:var(--radius);white-space:normal;width:220px;z-index:100;pointer-events:none;}
+  .tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--brand-black);}
+  .tip-trigger:hover .tip-box{display:block;}
+  .results-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+  .results-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:var(--bg);}
+  .results-meta{font-size:11px;color:var(--text-muted);}
+  .results-meta strong{color:var(--text);font-weight:500;}
+  table.results-tbl{width:100%;border-collapse:collapse;}
+  table.results-tbl th{padding:8px 14px;text-align:right;font-size:10px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);font-weight:500;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap;}
+  table.results-tbl th:first-child{text-align:left;}
+  table.results-tbl th.primary-col{color:var(--text-muted);}
+  table.results-tbl td{padding:8px 14px;text-align:right;border-bottom:1px solid var(--border);font-size:13px;}
+  table.results-tbl td:first-child{text-align:left;font-family:var(--mono);font-size:12px;font-weight:500;}
+  table.results-tbl tr:last-child td{border-bottom:none;}
+  table.results-tbl tr:hover td{background:var(--bg);}
+  .td-qty{font-family:var(--mono);font-size:12px;font-weight:500;}
+  .td-total{font-family:var(--mono);font-weight:500;font-size:13px;}
+  .td-muted{color:var(--text-muted);font-size:11px;}
+  .note-strip{padding:8px 16px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);background:var(--bg);}
+  input.sell-edit{width:76px;border:none;background:transparent;font-family:var(--mono);font-size:15px;font-weight:500;outline:none;border-bottom:1px dashed var(--border-strong);text-align:right;padding:1px 0;transition:border-color .15s;}
+  input.sell-edit.emb{color:var(--emb-accent-text);}
+  input.sell-edit.lth{color:var(--lth-accent-text);}
+  input.sell-edit.ptch{color:var(--ptch-accent-text);}
+  input.sell-edit:focus{border-bottom-color:var(--brand-teal);}
+  .copy-area{display:none;border-top:1px solid var(--border);padding:14px 16px;background:var(--bg);}
+  .copy-area.visible{display:block;}
+  .copy-tabs{display:flex;gap:4px;margin-bottom:10px;}
+  .copy-tab{padding:4px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);font-size:11px;cursor:pointer;font-family:var(--sans);color:var(--text-muted);}
+  .copy-tab.active{background:var(--brand-black);color:#fff;border-color:var(--brand-black);}
+  .copy-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:11px;color:var(--text);white-space:pre;line-height:1.7;overflow-x:auto;user-select:all;cursor:text;}
+  .copy-success{font-size:11px;color:var(--emb-accent);font-weight:500;opacity:0;transition:opacity .3s;}
+  .copy-success.show{opacity:1;}
+  .dig-banner{margin-bottom:12px;background:var(--emb-accent-light);border:1px solid #b8d4c0;border-radius:var(--radius);padding:9px 12px;font-size:11px;color:var(--emb-accent-text);display:none;}
+  .dig-banner.visible{display:block;}
+  .collapsible-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:4px;}
+  .collapsible-toggle:hover{background:var(--bg);}
+  .collapsible-title{font-size:11px;font-weight:500;color:var(--text-muted);}
+  .collapsible-arrow{font-size:10px;color:var(--text-faint);transition:transform .2s;}
+  .collapsible-arrow.open{transform:rotate(180deg);}
+  .collapsible-body{display:none;margin-bottom:14px;}
+  .collapsible-body.open{display:block;}
+  .cost-pill{background:var(--lth-accent-light);border-radius:var(--radius);padding:8px 12px;display:inline-flex;flex-direction:column;gap:2px;border:1px solid #d4b89a;width:100%;}
+  .cost-pill-label{font-size:9px;color:var(--lth-accent-text);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;}
+  .cost-pill-val{font-size:18px;font-weight:500;font-family:var(--mono);color:var(--lth-accent-text);}
+  .ref-controls{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .ref-controls select{padding:6px 28px 6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--sans);font-size:12px;background:var(--surface);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7468' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;-webkit-appearance:none;appearance:none;outline:none;color:var(--text);}
+  .ref-tbl-wrap{overflow-x:auto;}
+  table.ref{width:100%;border-collapse:collapse;font-size:11px;}
+  table.ref th{background:var(--bg);padding:6px 8px;text-align:right;font-weight:500;color:var(--text-faint);border-bottom:1px solid var(--border);white-space:nowrap;font-size:10px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;}
+  table.ref th:first-child{text-align:left;}
+  table.ref td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--border);}
+  table.ref td:first-child{text-align:left;color:var(--text-muted);font-size:11px;}
+  table.ref tr:hover td{background:var(--bg);}
+  .addon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px;}
+  .addon-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;}
+  .addon-name{font-size:12px;font-weight:500;margin-bottom:3px;}
+  .addon-sub{font-size:11px;color:var(--text-muted);}
+  .section-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:12px;font-weight:500;}
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;color:var(--text-faint);text-align:center;border:1.5px dashed var(--border);border-radius:var(--radius-lg);}
+  .empty-text{font-size:12px;line-height:1.6;}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">Printmade</span>
+  <span class="header-sep">/</span>
+  <span class="header-title">Hat decoration quote calculator</span>
+</header>
+<div class="main">
+  <div class="tabs">
+    <button class="tab active emb" onclick="switchTab('emb',this)">Embroidery</button>
+    <button class="tab lth" onclick="switchTab('lth',this)">Leatherette patch</button>
+    <button class="tab ptch" onclick="switchTab('ptch',this)">Patches</button>
+  </div>
+
+  <!-- EMBROIDERY -->
+  <div id="panel-emb" class="panel active">
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSub('emb-calc',this)">Quote calculator</button>
+      <button class="sub-tab" onclick="switchSub('emb-ref',this)">Zome price reference</button>
+      <button class="sub-tab" onclick="switchSub('emb-addons',this)">Add-ons</button>
+    </div>
+    <div id="sub-emb-calc" class="sub-panel active">
+      <div class="calc-layout">
+        <div class="inputs-col">
+          <div class="card">
+            <div class="card-title">Job details</div>
+            <div class="field-stack">
+              <div class="field-row">
+                <div class="field"><label>Garment cost/pc ($)</label><input type="number" id="garment-cost" placeholder="0.00" step="0.01" min="0" oninput="embLiveUpdate()"></div>
+                <div class="field"><label>Stitch tier</label><select id="stitch-tier" onchange="embLiveUpdate()">
+                  <option value="S1">S1 — up to 5,000</option><option value="S2">S2 — 5,001–6,000</option><option value="S3">S3 — 6,001–7,000</option><option value="S4">S4 — 7,001–8,000</option><option value="S5">S5 — 8,001–9,000</option><option value="S6">S6 — 9,001–10,000</option><option value="S7">S7 — 10,001–11,000</option><option value="S8">S8 — 11,001–12,000</option><option value="S9">S9 — 12,001–13,000</option><option value="S10">S10 — 13,001–14,000</option><option value="S11">S11 — 14,001–15,000</option><option value="S12">S12 — 15,001–16,000</option>
+                </select></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label>Extra fee (cost/pc)</label><input type="number" id="extra-fee" placeholder="0.00" step="0.01" min="0" oninput="embLiveUpdate()"></div>
+              </div>
+            </div>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:10px;margin-bottom:0;background:var(--emb-accent-light,#f4f9f5);border:1px solid #b8d4c0;border-radius:var(--radius);padding:9px 12px;">A $45 digitization fee needs to be included on the customer's invoice as a separate charge under extra fees.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Add-ons (Zome cost/pc)</div>
+            <div class="field-stack">
+              <div class="field-row">
+                <div class="field"><label>3D puff</label><select id="addon-puff" onchange="embLiveUpdate()"><option value="0">No</option><option value="1.50">Yes (+$1.50)</option></select></div>
+                <div class="field"><label>Metallic thread</label><select id="addon-metallic" onchange="embLiveUpdate()"><option value="0">No</option><option value="1.00">Yes (+$1.00)</option></select></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label>Personalization</label><select id="addon-personal" onchange="embLiveUpdate()"><option value="0">None</option><option value="6.00">1 line (+$6.00)</option><option value="8.00">2 lines (+$8.00)</option></select></div>
+                <div class="field"><label>Waterproof seal</label><select id="addon-seal" onchange="embLiveUpdate()"><option value="0">None</option><option value="3.00">Left chest (+$3.00)</option><option value="6.00">Full front/back (+$6.00)</option></select></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label>Poly-bagging</label><select id="addon-bag" onchange="embLiveUpdate()"><option value="0">None</option><option value="0.60">Apparel (+$0.60)</option><option value="1.00">Jacket/sweatshirt (+$1.00)</option></select></div>
+                <div class="field"><label>Special hooping</label><select id="addon-hoop" onchange="embLiveUpdate()"><option value="0">None</option><option value="0.75">Standard (+$0.75)</option><option value="1.00">Bucket cap (+$1.00)</option></select></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Quantity tiers</div>
+          </div>
+        </div>
+        <div class="results-col">
+          <div id="emb-empty" class="empty-state"><div class="empty-text">Enter garment cost to see your quote.<br><span style="font-size:11px;opacity:.7;">Prices update live as you type.</span></div></div>
+          <div id="emb-results-wrap" style="display:none;">
+            <div id="emb-summary"></div>
+            <div class="results-card">
+              <div class="results-header">
+                <div class="results-meta" id="emb-results-meta"></div>
+                <div style="display:flex;gap:8px;align-items:center;"><span class="copy-success" id="emb-copy-success">Copied!</span><button class="btn btn-sm" onclick="embToggleCopy()">Copy for email</button></div>
+              </div>
+              <div class="copy-area" id="emb-copy-area">
+                <div class="copy-tabs"><button class="copy-tab active" onclick="switchCopyTab('emb','branded',this)">Branded table</button><button class="copy-tab" onclick="switchCopyTab('emb','plain',this)">Plain text</button></div>
+                <div id="emb-copy-branded">
+                  <div style="overflow-x:auto;"><div id="emb-branded-preview"></div></div>
+                  <p style="font-size:10px;color:var(--text-faint);margin-top:4px;">✏️ Click the teal header to edit.</p>
+                  <div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="copyBrandedHTML('emb')">Copy HTML for Gmail</button></div>
+                </div>
+                <div id="emb-copy-plain" style="display:none;"><div class="copy-box" id="emb-copy-box"></div><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="copyPlain('emb')">Copy to clipboard</button></div></div>
+              </div>
+              <div style="overflow-x:auto;"><table class="results-tbl" id="emb-results-table"></table></div>
+              <div class="note-strip" id="emb-results-note"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="sub-emb-ref" class="sub-panel">
+      <div class="card">
+        <div class="ref-controls">
+          <span class="section-label" style="margin:0;">Sell price at</span>
+          <select id="ref-margin" onchange="renderRef()"><option value="sliding" selected>Sliding (your curve)</option><option value="0.30">30%</option><option value="0.35">35%</option><option value="0.40">40%</option><option value="0.45">45%</option><option value="0.50">50%</option><option value="0.55">55%</option><option value="0.60">60%</option></select>
+          <button class="link-btn" id="ref-toggle" onclick="toggleRefCosts()">show sell prices</button>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Decoration only — excludes garment. Digitizing quoted separately.</p>
+        <div class="ref-tbl-wrap"><table class="ref" id="ref-table"></table></div>
+      </div>
+    </div>
+    <div id="sub-emb-addons" class="sub-panel">
+      <div class="section-label">Per-piece add-ons — Zome cost for reference</div>
+      <div class="addon-grid" id="addon-cards"></div>
+      <div class="section-label">Rush fees</div>
+      <div class="addon-grid" id="rush-cards"></div>
+    </div>
+  </div>
+
+  <!-- LEATHERETTE -->
+  <div id="panel-lth" class="panel">
+    <div class="calc-layout">
+      <div class="inputs-col">
+        <div class="card">
+          <div class="card-title">Job details</div>
+          <div class="field-stack">
+            <div class="field-row">
+              <div class="field"><label>Hat cost/pc ($)</label><input type="number" id="lth-garment" placeholder="0.00" step="0.01" min="0" oninput="lthLiveUpdate()"></div>
+              <div class="field"><label>Extra fee (cost/pc)</label><input type="number" id="lth-extra" placeholder="0.00" step="0.01" min="0" oninput="lthLiveUpdate()"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Quantity tiers</div>
+        </div>
+        <div class="collapsible-toggle" onclick="toggleCollapsible('lth-costs-body','lth-costs-arrow')">
+          <span class="collapsible-title">Leatherette cost inputs</span>
+          <span class="collapsible-arrow" id="lth-costs-arrow">▼</span>
+        </div>
+        <div class="collapsible-body" id="lth-costs-body">
+          <div class="card" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Saved automatically — won't reset on refresh.</p>
+            <div class="field-stack">
+              <div class="field-row"><div class="field"><label>Sheet cost ($)</label><input type="number" id="lth-sheet-cost" value="7.00" step="0.01" min="0" oninput="lthSaveCosts();lthUpdateCostDisplay();lthLiveUpdate()"></div><div class="field"><label>Patches/sheet</label><input type="number" id="lth-patches-per-sheet" value="26" step="1" min="1" oninput="lthSaveCosts();lthUpdateCostDisplay();lthLiveUpdate()"></div></div>
+              <div class="field-row"><div class="field"><label>Labor rate ($/hr)</label><input type="number" id="lth-labor-rate" value="26.00" step="0.01" min="0" oninput="lthSaveCosts();lthUpdateCostDisplay();lthLiveUpdate()"></div><div class="field"><label>Hats/hour</label><input type="number" id="lth-hats-per-hr" value="45" step="1" min="1" oninput="lthSaveCosts();lthUpdateCostDisplay();lthLiveUpdate()"></div></div>
+              <div class="field-row"><div class="field"><label>Glowforge cost ($)</label><input type="number" id="lth-gf-cost" value="6000" step="100" min="0" oninput="lthSaveCosts();lthUpdateCostDisplay();lthLiveUpdate()"></div><div class="field"><label>Amortize (years)</label><input type="number" id="lth-gf-years" value="3" step="1" min="1" oninput="lthSaveCosts();lthUpdateCostDisplay();lthLiveUpdate()"></div></div>
+              <div class="field-row"><div class="field"><label>Annual vol. (hats)</label><input type="number" id="lth-annual-vol" value="2000" step="100" min="1" oninput="lthSaveCosts();lthUpdateCostDisplay();lthLiveUpdate()"></div><div class="field" style="display:flex;align-items:flex-end;"><div class="cost-pill"><span class="cost-pill-label">Deco cost/pc</span><span class="cost-pill-val" id="lth-cost-display">$1.85</span></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="results-col">
+        <div id="lth-empty" class="empty-state"><div class="empty-text">Enter hat cost to see your quote.<br><span style="font-size:11px;opacity:.7;">Prices update live as you type.</span></div></div>
+        <div id="lth-results-wrap" style="display:none;">
+          <div id="lth-summary"></div>
+          <div class="results-card">
+            <div class="results-header"><div class="results-meta" id="lth-results-meta"></div><div style="display:flex;gap:8px;align-items:center;"><span class="copy-success" id="lth-copy-success">Copied!</span><button class="btn btn-sm" onclick="lthToggleCopy()">Copy for email</button></div></div>
+            <div class="copy-area" id="lth-copy-area">
+              <div class="copy-tabs"><button class="copy-tab active" onclick="switchCopyTab('lth','branded',this)">Branded table</button><button class="copy-tab" onclick="switchCopyTab('lth','plain',this)">Plain text</button></div>
+              <div id="lth-copy-branded"><div style="overflow-x:auto;"><div id="lth-branded-preview"></div></div><p style="font-size:10px;color:var(--text-faint);margin-top:4px;">✏️ Click the teal header to edit.</p><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="copyBrandedHTML('lth')">Copy HTML for Gmail</button></div></div>
+              <div id="lth-copy-plain" style="display:none;"><div class="copy-box" id="lth-copy-box"></div><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="copyPlain('lth')">Copy to clipboard</button></div></div>
+            </div>
+            <div style="overflow-x:auto;"><table class="results-tbl" id="lth-results-table"></table></div>
+            <div class="note-strip" id="lth-results-note"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATCHES -->
+  <div id="panel-ptch" class="panel">
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSub('ptch-woven',this)">Woven</button>
+      <button class="sub-tab" onclick="switchSub('ptch-embroidered',this)">Embroidered</button>
+      <button class="sub-tab" onclick="switchSub('ptch-sublimated',this)">Sublimated</button>
+    </div>
+    <!-- Woven -->
+    <div id="sub-ptch-woven" class="sub-panel active">
+      <div class="calc-layout">
+        <div class="inputs-col">
+          <div class="card"><div class="card-title">Job details</div><div class="field-stack"><div class="field-row"><div class="field"><label>Garment cost/pc ($)</label><input type="number" id="ptch-garment-woven" placeholder="0.00" step="0.01" min="0" oninput="ptchLiveUpdate('woven')"></div><div class="field"><label>Extra fee (cost/pc)</label><input type="number" id="ptch-extra-woven" placeholder="0.00" step="0.01" min="0" oninput="ptchLiveUpdate('woven')"></div></div><div class="field"><label>Patch size (default 3")</label><select id="ptch-size-woven" onchange="ptchLiveUpdate('woven')"><option value='1"'>1"</option><option value='1.5"'>1.5"</option><option value='2"'>2"</option><option value='2.5"'>2.5"</option><option value='3"' selected>3"</option><option value='3.5"'>3.5"</option><option value='4"'>4"</option><option value='4.5"'>4.5"</option></select></div></div><p style="font-size:11px;color:var(--text-muted);margin-top:10px;margin-bottom:0;background:var(--emb-accent-light,#f4f9f5);border:1px solid #b8d4c0;border-radius:var(--radius);padding:9px 12px;">A patch fee needs to be included on the customer's invoice. Price will range from $50–$75 — use discretion based on patch size.</p></div>
+          <div class="card"><div class="card-title">Quantity tiers</div></div>
+        </div>
+        <div class="results-col">
+          <div id="ptch-empty-woven" class="empty-state"><div class="empty-text">Enter garment cost to see your quote.<br><span style="font-size:11px;opacity:.7;">Prices update live as you type.</span></div></div>
+          <div id="ptch-results-woven" style="display:none;"><div id="ptch-summary-woven"></div><div class="results-card"><div class="results-header"><div class="results-meta" id="ptch-results-meta-woven"></div><div style="display:flex;gap:8px;align-items:center;"><span class="copy-success" id="ptch-woven-copy-success">Copied!</span><button class="btn btn-sm" onclick="ptchToggleCopy('woven')">Copy for email</button></div></div><div class="copy-area" id="ptch-copy-area-woven"><div class="copy-tabs"><button class="copy-tab active" onclick="ptchSwitchCopyTab('woven','branded',this)">Branded table</button><button class="copy-tab" onclick="ptchSwitchCopyTab('woven','plain',this)">Plain text</button></div><div id="ptch-copy-branded-woven"><div style="overflow-x:auto;"><div id="ptch-woven-branded-preview"></div></div><p style="font-size:10px;color:var(--text-faint);margin-top:4px;">✏️ Click the teal header to edit.</p><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="ptchCopyBrandedHTML('woven')">Copy HTML for Gmail</button></div></div><div id="ptch-copy-plain-woven" style="display:none;"><div class="copy-box" id="ptch-copy-box-woven"></div><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="ptchCopyPlain('woven')">Copy to clipboard</button></div></div></div><div style="overflow-x:auto;"><table class="results-tbl" id="ptch-table-woven"></table></div><div class="note-strip" id="ptch-note-woven"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Embroidered -->
+    <div id="sub-ptch-embroidered" class="sub-panel">
+      <div class="calc-layout">
+        <div class="inputs-col">
+          <div class="card"><div class="card-title">Job details</div><div class="field-stack"><div class="field-row"><div class="field"><label>Garment cost/pc ($)</label><input type="number" id="ptch-garment-embroidered" placeholder="0.00" step="0.01" min="0" oninput="ptchLiveUpdate('embroidered')"></div><div class="field"><label>Extra fee (cost/pc)</label><input type="number" id="ptch-extra-embroidered" placeholder="0.00" step="0.01" min="0" oninput="ptchLiveUpdate('embroidered')"></div></div><div class="field"><label>Patch size (default 3")</label><select id="ptch-size-embroidered" onchange="ptchLiveUpdate('embroidered')"><option value='2"'>2"</option><option value='2.5"'>2.5"</option><option value='3"' selected>3"</option><option value='3.5"'>3.5"</option><option value='4"'>4"</option><option value='4.5"'>4.5"</option><option value='5"'>5"</option><option value='5.5"'>5.5"</option></select></div></div><p style="font-size:11px;color:var(--text-muted);margin-top:10px;margin-bottom:0;background:var(--emb-accent-light,#f4f9f5);border:1px solid #b8d4c0;border-radius:var(--radius);padding:9px 12px;">A patch fee needs to be included on the customer's invoice. Price will range from $50–$75 — use discretion based on patch size.</p></div>
+          <div class="card"><div class="card-title">Quantity tiers</div></div>
+        </div>
+        <div class="results-col">
+          <div id="ptch-empty-embroidered" class="empty-state"><div class="empty-text">Enter garment cost to see your quote.<br><span style="font-size:11px;opacity:.7;">Prices update live as you type.</span></div></div>
+          <div id="ptch-results-embroidered" style="display:none;"><div id="ptch-summary-embroidered"></div><div class="results-card"><div class="results-header"><div class="results-meta" id="ptch-results-meta-embroidered"></div><div style="display:flex;gap:8px;align-items:center;"><span class="copy-success" id="ptch-embroidered-copy-success">Copied!</span><button class="btn btn-sm" onclick="ptchToggleCopy('embroidered')">Copy for email</button></div></div><div class="copy-area" id="ptch-copy-area-embroidered"><div class="copy-tabs"><button class="copy-tab active" onclick="ptchSwitchCopyTab('embroidered','branded',this)">Branded table</button><button class="copy-tab" onclick="ptchSwitchCopyTab('embroidered','plain',this)">Plain text</button></div><div id="ptch-copy-branded-embroidered"><div style="overflow-x:auto;"><div id="ptch-embroidered-branded-preview"></div></div><p style="font-size:10px;color:var(--text-faint);margin-top:4px;">✏️ Click the teal header to edit.</p><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="ptchCopyBrandedHTML('embroidered')">Copy HTML for Gmail</button></div></div><div id="ptch-copy-plain-embroidered" style="display:none;"><div class="copy-box" id="ptch-copy-box-embroidered"></div><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="ptchCopyPlain('embroidered')">Copy to clipboard</button></div></div></div><div style="overflow-x:auto;"><table class="results-tbl" id="ptch-table-embroidered"></table></div><div class="note-strip" id="ptch-note-embroidered"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Sublimated -->
+    <div id="sub-ptch-sublimated" class="sub-panel">
+      <div class="calc-layout">
+        <div class="inputs-col">
+          <div class="card"><div class="card-title">Job details</div><div class="field-stack"><div class="field-row"><div class="field"><label>Garment cost/pc ($)</label><input type="number" id="ptch-garment-sublimated" placeholder="0.00" step="0.01" min="0" oninput="ptchLiveUpdate('sublimated')"></div><div class="field"><label>Extra fee (cost/pc)</label><input type="number" id="ptch-extra-sublimated" placeholder="0.00" step="0.01" min="0" oninput="ptchLiveUpdate('sublimated')"></div></div><div class="field"><label>Patch size (default 3")</label><select id="ptch-size-sublimated" onchange="ptchLiveUpdate('sublimated')"><option value='2"'>2"</option><option value='2.5"'>2.5"</option><option value='3"' selected>3"</option><option value='3.5"'>3.5"</option><option value='4"'>4"</option><option value='4.5"'>4.5"</option><option value='5"'>5"</option><option value='5.5"'>5.5"</option></select></div></div><p style="font-size:11px;color:var(--text-muted);margin-top:10px;margin-bottom:0;background:var(--emb-accent-light,#f4f9f5);border:1px solid #b8d4c0;border-radius:var(--radius);padding:9px 12px;">A patch fee needs to be included on the customer's invoice. Price will range from $50–$75 — use discretion based on patch size.</p></div>
+          <div class="card"><div class="card-title">Quantity tiers</div></div>
+        </div>
+        <div class="results-col">
+          <div id="ptch-empty-sublimated" class="empty-state"><div class="empty-text">Enter garment cost to see your quote.<br><span style="font-size:11px;opacity:.7;">Prices update live as you type.</span></div></div>
+          <div id="ptch-results-sublimated" style="display:none;"><div id="ptch-summary-sublimated"></div><div class="results-card"><div class="results-header"><div class="results-meta" id="ptch-results-meta-sublimated"></div><div style="display:flex;gap:8px;align-items:center;"><span class="copy-success" id="ptch-sublimated-copy-success">Copied!</span><button class="btn btn-sm" onclick="ptchToggleCopy('sublimated')">Copy for email</button></div></div><div class="copy-area" id="ptch-copy-area-sublimated"><div class="copy-tabs"><button class="copy-tab active" onclick="ptchSwitchCopyTab('sublimated','branded',this)">Branded table</button><button class="copy-tab" onclick="ptchSwitchCopyTab('sublimated','plain',this)">Plain text</button></div><div id="ptch-copy-branded-sublimated"><div style="overflow-x:auto;"><div id="ptch-sublimated-branded-preview"></div></div><p style="font-size:10px;color:var(--text-faint);margin-top:4px;">✏️ Click the teal header to edit.</p><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="ptchCopyBrandedHTML('sublimated')">Copy HTML for Gmail</button></div></div><div id="ptch-copy-plain-sublimated" style="display:none;"><div class="copy-box" id="ptch-copy-box-sublimated"></div><div style="display:flex;justify-content:flex-end;margin-top:8px;"><button class="btn btn-sm" onclick="ptchCopyPlain('sublimated')">Copy to clipboard</button></div></div></div><div style="overflow-x:auto;"><table class="results-tbl" id="ptch-table-sublimated"></table></div><div class="note-strip" id="ptch-note-sublimated"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const STITCH={S1:{label:'up to 5,000',costs:[8.76,6.26,4.87,4.17,4.03,3.75,3.27,2.99,2.92,2.85]},S2:{label:'5,001–6,000',costs:[9.80,7.09,5.49,4.73,4.56,4.24,3.68,3.34,3.25,3.18]},S3:{label:'6,001–7,000',costs:[10.84,7.92,6.12,5.28,5.09,4.73,4.10,3.68,3.59,3.52]},S4:{label:'7,001–8,000',costs:[11.88,8.76,6.74,5.84,5.62,5.21,4.52,4.03,3.92,3.85]},S5:{label:'8,001–9,000',costs:[12.93,9.59,7.37,6.39,6.14,5.70,4.93,4.38,4.25,4.18]},S6:{label:'9,001–10,000',costs:[13.97,10.43,7.99,6.95,6.67,6.19,5.35,4.73,4.59,4.52]},S7:{label:'10,001–11,000',costs:[15.01,11.26,8.62,7.51,7.20,6.67,5.77,5.07,4.92,4.85]},S8:{label:'11,001–12,000',costs:[16.05,12.09,9.24,8.06,7.73,7.16,6.19,5.42,5.25,5.18]},S9:{label:'12,001–13,000',costs:[17.10,12.93,9.87,8.62,8.26,7.65,6.60,5.77,5.59,5.52]},S10:{label:'13,001–14,000',costs:[18.14,13.76,10.49,9.17,8.78,8.13,7.02,6.12,5.92,5.85]},S11:{label:'14,001–15,000',costs:[19.18,14.60,11.12,9.73,9.31,8.62,7.44,6.46,6.26,6.19]},S12:{label:'15,001–16,000',costs:[20.22,15.43,11.75,10.29,9.84,9.10,7.85,6.81,6.59,6.52]}};
+const ZOME_BREAKS=[1,6,12,24,48,72,144,288,500,1000];
+const ZOME_LABELS=['1','6','12','24','48','72','144','288','500','1000+'];
+const EMB_SLIDING=[{qty:20,margin:.49},{qty:30,margin:.44},{qty:50,margin:.35},{qty:100,margin:.34},{qty:200,margin:.32},{qty:300,margin:.31},{qty:500,margin:.30}];
+const LTH_SLIDING=[{qty:20,margin:.56},{qty:30,margin:.52},{qty:40,margin:.49},{qty:50,margin:.46},{qty:75,margin:.44},{qty:100,margin:.39},{qty:150,margin:.37},{qty:200,margin:.34}];
+const PTCH_SLIDING=[{qty:20,margin:.49},{qty:30,margin:.46},{qty:40,margin:.43},{qty:50,margin:.41},{qty:75,margin:.38},{qty:100,margin:.36},{qty:150,margin:.34},{qty:200,margin:.32},{qty:300,margin:.31},{qty:500,margin:.30}];
+const EMB_DEFAULT=[20,30,50,100,200,300,500];
+const LTH_DEFAULT=[20,30,40,50,75,100,150,200];
+const PTCH_DEFAULT=[20,30,40,50,75,100,150,200];
+
+const PATCH_DATA={
+  woven:{label:'Woven',qtys:[10,25,50,100,200,300],costs:{'1"':[4.70,2.99,2.09,1.35,0.90,0.87],'1.5"':[6.47,4.13,2.22,1.59,1.04,0.90],'2"':[8.44,4.66,2.35,1.68,1.14,0.95],'2.5"':[8.54,5.21,2.73,1.77,1.22,1.04],'3"':[8.66,5.47,2.87,1.92,1.31,1.22],'3.5"':[9.48,7.21,3.85,2.22,1.82,1.26],'4"':[11.03,8.15,4.76,2.66,1.95,1.49],'4.5"':[11.47,9.06,5.30,3.17,2.22,1.81]}},
+  embroidered:{label:'Embroidered',qtys:[10,20,50,100,200,300],costs:{'2"':[7.14,4.40,2.00,1.30,0.77,0.68],'2.5"':[8.59,4.63,2.27,1.47,1.11,0.93],'3"':[9.82,5.70,2.98,1.66,1.18,1.14],'3.5"':[12.46,6.46,3.24,1.77,1.30,1.22],'4"':[13.45,7.54,3.36,2.00,1.42,1.31],'4.5"':[14.48,8.60,3.85,2.41,1.65,1.58],'5"':[15.41,10.09,4.51,2.66,2.11,1.83],'5.5"':[17.40,11.61,5.29,3.25,2.35,1.96]}},
+  sublimated:{label:'Sublimated',qtys:[25,50,100,200,300,500],costs:{'2"':[3.13,2.74,1.48,1.11,0.96,0.62],'2.5"':[3.48,3.06,1.64,1.22,1.06,0.72],'3"':[3.85,3.39,1.82,1.35,1.18,0.81],'3.5"':[4.03,3.91,2.45,1.50,1.18,0.87],'4"':[4.54,4.13,2.58,1.73,1.28,0.90],'4.5"':[4.81,4.49,2.96,2.04,1.64,0.95],'5"':[8.98,5.58,3.50,2.73,1.82,1.00],'5.5"':[9.97,7.16,4.03,3.45,3.04,2.45]}}
+};
+
+function getSliding(curve,qty){let m=curve[0].margin;for(let i=curve.length-1;i>=0;i--){if(qty>=curve[i].qty){m=curve[i].margin;break;}}return m;}
+function getZomeCost(k,qty){const c=STITCH[k].costs;let i=0;for(let j=ZOME_BREAKS.length-1;j>=0;j--){if(qty>=ZOME_BREAKS[j]){i=j;break;}}return c[i];}
+function getPatchCost(type,size,qty){const d=PATCH_DATA[type];const costs=d.costs[size];const qtys=d.qtys;if(qty<=qtys[0])return costs[0];if(qty>=qtys[qtys.length-1])return costs[costs.length-1];for(let i=0;i<qtys.length-1;i++){if(qty>=qtys[i]&&qty<qtys[i+1]){const t=(qty-qtys[i])/(qtys[i+1]-qtys[i]);return costs[i]+(costs[i+1]-costs[i])*t;}}return costs[costs.length-1];}
+function mu(cost,m){return cost/(1-m);}
+function fmt(n){return'$'+n.toFixed(2);}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function switchTab(tab,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-'+tab).classList.add('active');}
+function switchSub(sub,btn){const panel=btn.closest('.panel');panel.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');panel.querySelectorAll('.sub-panel').forEach(p=>p.classList.remove('active'));document.getElementById('sub-'+sub).classList.add('active');}
+function toggleCollapsible(bodyId,arrowId){document.getElementById(bodyId).classList.toggle('open');document.getElementById(arrowId).classList.toggle('open');}
+
+// ── SHARED HELPERS ────────────────────────────────────────────────────────────
+function buildSummaryStrip(elId,results,decoKey){
+  const hi=results[0];const lo=results[results.length-1];
+  const decoHi=hi[decoKey];const decoLo=lo[decoKey];
+  const decoStr=Math.abs(decoHi-decoLo)<0.005?`${fmt(decoHi)}/pc`:`${fmt(decoHi)} – ${fmt(decoLo)}/pc`;
+  document.getElementById(elId).innerHTML=`<div class="summary-strip"><div class="summary-item"><div class="summary-label">Price range</div><div class="summary-val">${fmt(hi.sellPP)} – ${fmt(lo.sellPP)}/pc</div></div><div class="summary-sep"></div><div class="summary-item"><div class="summary-label">Margin</div><div class="summary-val">${Math.round(hi.margin*100)}–${Math.round(lo.margin*100)}%</div></div><div class="summary-sep"></div><div class="summary-item" style="position:relative;"><div class="summary-label">Deco cost <span class="tip-trigger">?<span class="tip-box">Your cost to fulfill the decoration. Embroidery: Zome rate at that qty. Leatherette: material+labor+Glowforge. Patches: Custom Patch Factory pricing.</span></span></div><div class="summary-val">${decoStr}</div></div></div>`;
+}
+function buildBrandedPreview(previewId,name,rows){
+  const FS='14px';
+  let html=`<table style="width:240px;max-width:260px;border-collapse:collapse;font-family:'Montserrat',Arial,sans-serif;table-layout:auto;"><tr style="background:#00bcd4;"><td colspan="2" style="padding:10px 16px;font-family:'Montserrat',Arial,sans-serif;font-weight:700;font-size:${FS};color:#fff;word-wrap:break-word;"><span contenteditable="true" spellcheck="false" style="outline:none;display:block;min-width:60px;cursor:text;border-bottom:1px dashed rgba(255,255,255,.5);">${name}</span></td></tr><tr style="background:#111;"><td style="padding:8px 16px;font-weight:700;font-size:${FS};color:#fff;word-wrap:break-word;">Price Breaks</td><td style="padding:8px 16px;font-weight:700;font-size:${FS};color:#fff;text-align:right;word-wrap:break-word;">Price Per Unit</td></tr>`;
+  rows.forEach((r,i)=>{const lbl=r.isLast?`${r.qty}+ pieces`:`${r.qty} pieces`;const bg=i%2===0?'#fdf0b0':'#ffffff';html+=`<tr style="background:${bg};"><td style="padding:7px 16px;font-size:${FS};color:#111;border-bottom:1px solid #e2ddd6;word-wrap:break-word;">${lbl}</td><td style="padding:7px 16px;font-size:${FS};color:#111;text-align:right;border-bottom:1px solid #e2ddd6;word-wrap:break-word;">${fmt(r.sellPP)}</td></tr>`;});
+  html+=`</table>`;
+  document.getElementById(previewId).innerHTML=html;
+}
+function buildResultsTable(tableId,results,decoHeader,accentClass,recalcFn){
+  let html=`<thead><tr><th>Qty</th><th>${decoHeader}</th><th class="primary-col">Sell price/pc</th><th class="primary-col">Job total</th><th>Your margin</th></tr></thead><tbody>`;
+  results.forEach((r,i)=>{
+    const lbl=r.isLast?`${r.qty}+ pcs`:`${r.qty} pcs`;
+    const decoCost=r.embCost||r.decoCost||r.patchCost;
+    html+=`<tr data-idx="${i}" data-cost="${r.totalCost}" data-qty="${r.qty}"><td class="td-qty">${lbl}</td><td class="td-muted">${fmt(decoCost)}</td><td><input class="sell-edit ${accentClass}" data-idx="${i}" type="number" value="${r.sellPP.toFixed(2)}" step="0.01" min="0" oninput="${recalcFn}(this)"></td><td class="td-total" id="${tableId}-job-${i}">${fmt(r.jobTotal)}</td><td class="td-muted" id="${tableId}-margin-${i}">${fmt(r.marginDollar)} (${Math.round(r.margin*100)}%)</td></tr>`;
+  });
+  html+='</tbody>';
+  document.getElementById(tableId).innerHTML=html;
+}
+function recalcRowGeneric(input,resultsArr,tableIdPrefix,previewId,plainBoxId){
+  const i=parseInt(input.dataset.idx);
+  const row=input.closest('tr');
+  const cost=parseFloat(row.dataset.cost);
+  const qty=parseInt(row.dataset.qty);
+  const sellPP=parseFloat(input.value)||0;
+  const jt=sellPP*qty;const md=(sellPP-cost)*qty;
+  const mp=sellPP>0?Math.round(((sellPP-cost)/sellPP)*100):0;
+  document.getElementById(`${tableIdPrefix}-job-${i}`).textContent=fmt(jt);
+  document.getElementById(`${tableIdPrefix}-margin-${i}`).textContent=`${fmt(md)} (${mp}%)`;
+  if(resultsArr[i]){resultsArr[i].sellPP=sellPP;resultsArr[i].jobTotal=jt;}
+  // Sync branded preview and plain text with live sell prices from table inputs
+  if(previewId&&plainBoxId){
+    const tbl=document.getElementById(tableIdPrefix);
+    if(tbl){
+      tbl.querySelectorAll('.sell-edit').forEach(inp=>{const idx=parseInt(inp.dataset.idx);if(resultsArr[idx])resultsArr[idx].sellPP=parseFloat(inp.value)||resultsArr[idx].sellPP;});
+    }
+    // Rebuild preview rows in-place
+    const preview=document.getElementById(previewId);
+    if(preview){
+      const rows=preview.querySelectorAll('table tr');
+      // rows[0]=header, rows[1]=col headers, rows[2..n]=data
+      resultsArr.forEach((r,idx)=>{
+        const dataRow=rows[idx+2];
+        if(dataRow){const cells=dataRow.querySelectorAll('td');if(cells[1])cells[1].textContent=fmt(r.sellPP);}
+      });
+    }
+    // Rebuild plain text
+    if(plainBoxId){
+      const box=document.getElementById(plainBoxId);
+      if(box){const name=box.textContent.split('\n')[0];box.textContent=buildPlainText(name,resultsArr);}
+    }
+  }
+}
+function switchCopyTab(prefix,tab,btn){document.getElementById(prefix+'-copy-area').querySelectorAll('.copy-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById(prefix+'-copy-branded').style.display=tab==='branded'?'block':'none';document.getElementById(prefix+'-copy-plain').style.display=tab==='plain'?'block':'none';}
+function copyBrandedHTML(prefix){
+  const preview=document.getElementById(prefix+'-branded-preview');
+  const clone=preview.cloneNode(true);const ed=clone.querySelector('[contenteditable]');if(ed){ed.removeAttribute('contenteditable');ed.style.borderBottom='none';}
+  const blob=new Blob([clone.innerHTML],{type:'text/html'});
+  navigator.clipboard.write([new ClipboardItem({'text/html':blob})]).then(()=>showCopied(prefix)).catch(()=>{const sel=window.getSelection();const r=document.createRange();r.selectNodeContents(preview);sel.removeAllRanges();sel.addRange(r);document.execCommand('copy');showCopied(prefix);});
+}
+function copyPlain(prefix){navigator.clipboard.writeText(document.getElementById(prefix+'-copy-box').textContent).then(()=>showCopied(prefix));}
+function showCopied(prefix){const el=document.getElementById(prefix+'-copy-success');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);}
+function buildPlainText(name,results){
+  const lines=[name,'—'.repeat(Math.min(name.length+4,40)),'','Qty'.padEnd(12)+'Price/pc','─'.repeat(24)];
+  results.forEach(r=>lines.push(((r.isLast?r.qty+'+':r.qty)+' pcs').padEnd(12)+fmt(r.sellPP)));
+  lines.push('');lines.push('Standard production: up to 14 days from order approval.');
+  return lines.join('\n');
+}
+function wirePlainSync(headerSelector,boxId,results){
+  setTimeout(()=>{const el=document.querySelector(`#${headerSelector} [contenteditable]`);if(el)el.addEventListener('input',()=>{document.getElementById(boxId).textContent=buildPlainText(el.textContent,results);});},0);
+}
+
+// ── TIER HELPERS ──────────────────────────────────────────────────────────────
+function makeTierFunctions(prefix,defaultArr,slidingCurve,calcFn){
+  const state={tiers:JSON.parse(localStorage.getItem(`tiers-${prefix}`)||'null')||[...defaultArr],editMode:false,lastResults:[]};
+  function save(){localStorage.setItem(`tiers-${prefix}`,JSON.stringify(state.tiers));}
+  function render(){
+    document.getElementById(`${prefix}-tier-row`).innerHTML=state.tiers.map((t,i)=>`<div class="tier-chip"><span class="tier-lbl">pcs</span><input type="number" min="1" step="1" value="${t}" onchange="${prefix}State.tiers[${i}]=parseInt(this.value)||${t};${prefix}State.save();${prefix}State.render();${prefix}State.calc();"><button class="rm" onclick="${prefix}State.removeTier(${i})">×</button></div>`).join('');
+  }
+  state.save=save;state.render=render;
+  state.calc=calcFn;
+  state.toggleEdit=function(){state.editMode=!state.editMode;document.getElementById(`${prefix}-tier-row`).style.display=state.editMode?'flex':'none';document.getElementById(`${prefix}-edit-controls`).style.display=state.editMode?'block':'none';document.getElementById(`${prefix}-edit-btn`).textContent=state.editMode?'done':'edit tiers';};
+  state.addTier=function(){state.tiers.push((state.tiers[state.tiers.length-1]||100)+25);save();render();};
+  state.removeTier=function(i){if(state.tiers.length<=1)return;state.tiers.splice(i,1);save();render();};
+  state.resetTiers=function(){state.tiers=[...defaultArr];save();render();calcFn();};
+  return state;
+}
+
+// ── EMBROIDERY ────────────────────────────────────────────────────────────────
+let embLastResults=[];
+const embState=makeTierFunctions('emb-tier',EMB_DEFAULT,EMB_SLIDING,embLiveUpdate);
+function embToggleEdit(){embState.toggleEdit();}
+function embAddTier(){embState.addTier();}
+function embRemoveTier(i){embState.removeTier(i);}
+function embResetTiers(){embState.resetTiers();}
+
+function embGetInputs(){return{garment:parseFloat(document.getElementById('garment-cost').value)||0,tierKey:document.getElementById('stitch-tier').value,extraFee:parseFloat(document.getElementById('extra-fee').value)||0,addonPP:['addon-puff','addon-metallic','addon-personal','addon-seal','addon-bag','addon-hoop'].reduce((s,id)=>s+parseFloat(document.getElementById(id).value),0)};}
+function embLiveUpdate(){const{garment,addonPP,extraFee}=embGetInputs();if(garment===0&&addonPP===0&&extraFee===0)return;embCalculate();}
+function embCalculate(){
+  const{garment,tierKey,extraFee,addonPP}=embGetInputs();
+  const tiers=embState.tiers;
+  embLastResults=tiers.map((qty,idx)=>{const isLast=idx===tiers.length-1;const margin=getSliding(EMB_SLIDING,qty);const embCost=getZomeCost(tierKey,qty);const totalCost=garment+embCost+addonPP+extraFee;const sellPP=mu(totalCost,margin);return{qty,isLast,margin,embCost,totalCost,sellPP,jobTotal:sellPP*qty,marginDollar:(sellPP-totalCost)*qty};});
+  document.getElementById('emb-results-meta').innerHTML=`${STITCH[tierKey].label} stitches${garment>0?` &nbsp;·&nbsp; garment ${fmt(garment)}/pc`:''}`;
+  document.getElementById('emb-empty').style.display='none';
+  document.getElementById('emb-results-wrap').style.display='block';
+  buildSummaryStrip('emb-summary',embLastResults,'embCost');
+  buildResultsTable('emb-results-table',embLastResults,'Zome cost/pc','emb','embRecalcRow');
+  buildBrandedPreview('emb-branded-preview','Embroidery Quote',embLastResults);
+  document.getElementById('emb-copy-box').textContent=buildPlainText('Embroidery Quote',embLastResults);
+  wirePlainSync('emb-branded-preview','emb-copy-box',embLastResults);
+  const notes=[];if(garment===0)notes.push('No garment cost — decoration only.');notes.push('Zome minimum invoice $100.');
+  document.getElementById('emb-results-note').textContent=notes.join('  ·  ');
+}
+function embRecalcRow(input){recalcRowGeneric(input,embLastResults,'emb-results-table','emb-branded-preview','emb-copy-box');}
+function embToggleCopy(){document.getElementById('emb-copy-area').classList.toggle('visible');}
+
+// ── LEATHERETTE ───────────────────────────────────────────────────────────────
+let lthLastResults=[];
+const lthState=makeTierFunctions('lth-tier',LTH_DEFAULT,LTH_SLIDING,lthLiveUpdate);
+function lthToggleEdit(){lthState.toggleEdit();}
+function lthAddTier(){lthState.addTier();}
+function lthRemoveTier(i){lthState.removeTier(i);}
+function lthResetTiers(){lthState.resetTiers();}
+
+function lthSaveCosts(){const keys=['lth-sheet-cost','lth-patches-per-sheet','lth-labor-rate','lth-hats-per-hr','lth-gf-cost','lth-gf-years','lth-annual-vol'];const v={};keys.forEach(k=>v[k]=document.getElementById(k).value);localStorage.setItem('lth-costs',JSON.stringify(v));}
+function lthLoadCosts(){const s=JSON.parse(localStorage.getItem('lth-costs')||'null');if(!s)return;Object.entries(s).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v;});}
+function lthCalcDeco(){const sh=parseFloat(document.getElementById('lth-sheet-cost').value)||7;const pps=parseFloat(document.getElementById('lth-patches-per-sheet').value)||26;const lr=parseFloat(document.getElementById('lth-labor-rate').value)||26;const hph=parseFloat(document.getElementById('lth-hats-per-hr').value)||45;const gf=parseFloat(document.getElementById('lth-gf-cost').value)||6000;const gfy=parseFloat(document.getElementById('lth-gf-years').value)||3;const av=parseFloat(document.getElementById('lth-annual-vol').value)||2000;return{mat:sh/pps,lab:lr/hph,gfPc:gf/gfy/av,total:(sh/pps)+(lr/hph)+(gf/gfy/av)};}
+function lthUpdateCostDisplay(){document.getElementById('lth-cost-display').textContent='$'+lthCalcDeco().total.toFixed(2);}
+function lthLiveUpdate(){const garment=parseFloat(document.getElementById('lth-garment').value)||0;const extra=parseFloat(document.getElementById('lth-extra').value)||0;if(garment===0&&extra===0)return;lthCalculate();}
+function lthCalculate(){
+  const garment=parseFloat(document.getElementById('lth-garment').value)||0;
+  const extra=parseFloat(document.getElementById('lth-extra').value)||0;
+  const{mat,lab,gfPc,total:decoCost}=lthCalcDeco();
+  const tiers=lthState.tiers;
+  lthLastResults=tiers.map((qty,idx)=>{const isLast=idx===tiers.length-1;const margin=getSliding(LTH_SLIDING,qty);const totalCost=garment+decoCost+extra;const sellPP=mu(totalCost,margin);return{qty,isLast,margin,decoCost,mat,lab,gfPc,totalCost,sellPP,jobTotal:sellPP*qty,marginDollar:(sellPP-totalCost)*qty};});
+  document.getElementById('lth-results-meta').innerHTML=`Leatherette patch${garment>0?` &nbsp;·&nbsp; hat ${fmt(garment)}/pc`:''}`;
+  document.getElementById('lth-empty').style.display='none';
+  document.getElementById('lth-results-wrap').style.display='block';
+  buildSummaryStrip('lth-summary',lthLastResults,'decoCost');
+  buildResultsTable('lth-results-table',lthLastResults,'Deco cost/pc','lth','lthRecalcRow');
+  buildBrandedPreview('lth-branded-preview','Leatherette Patch Quote',lthLastResults);
+  document.getElementById('lth-copy-box').textContent=buildPlainText('Leatherette Patch Quote',lthLastResults);
+  wirePlainSync('lth-branded-preview','lth-copy-box',lthLastResults);
+  const notes=[];if(garment===0)notes.push('No hat cost — decoration only.');notes.push(`Deco: mat ${fmt(lthLastResults[0].mat)} + labor ${fmt(lthLastResults[0].lab)} + Glowforge ${fmt(lthLastResults[0].gfPc)} = ${fmt(lthLastResults[0].decoCost)}/pc.`);
+  document.getElementById('lth-results-note').textContent=notes.join('  ·  ');
+}
+function lthRecalcRow(input){recalcRowGeneric(input,lthLastResults,'lth-results-table','lth-branded-preview','lth-copy-box');}
+function lthToggleCopy(){document.getElementById('lth-copy-area').classList.toggle('visible');}
+
+// ── PATCHES ───────────────────────────────────────────────────────────────────
+const ptchLastResults={woven:[],embroidered:[],sublimated:[]};
+const ptchTierState={};
+['woven','embroidered','sublimated'].forEach(type=>{
+  ptchTierState[type]={
+    tiers:JSON.parse(localStorage.getItem(`ptch-tiers-${type}`)||'null')||[...PTCH_DEFAULT],
+    editMode:false,
+  };
+});
+function ptchSaveTiers(type){localStorage.setItem(`ptch-tiers-${type}`,JSON.stringify(ptchTierState[type].tiers));}
+function ptchRenderTiers(type){
+  document.getElementById(`ptch-tier-row-${type}`).innerHTML=ptchTierState[type].tiers.map((t,i)=>`<div class="tier-chip"><span class="tier-lbl">pcs</span><input type="number" min="1" step="1" value="${t}" onchange="ptchTierState['${type}'].tiers[${i}]=parseInt(this.value)||${t};ptchSaveTiers('${type}');ptchRenderTiers('${type}');ptchLiveUpdate('${type}');"><button class="rm" onclick="ptchRemoveTier('${type}',${i})">×</button></div>`).join('');
+}
+function ptchToggleEdit(type){const s=ptchTierState[type];s.editMode=!s.editMode;document.getElementById(`ptch-tier-row-${type}`).style.display=s.editMode?'flex':'none';document.getElementById(`ptch-edit-controls-${type}`).style.display=s.editMode?'block':'none';document.getElementById(`ptch-edit-btn-${type}`).textContent=s.editMode?'done':'edit tiers';}
+function ptchAddTier(type){const s=ptchTierState[type];s.tiers.push((s.tiers[s.tiers.length-1]||100)+25);ptchSaveTiers(type);ptchRenderTiers(type);}
+function ptchRemoveTier(type,i){const s=ptchTierState[type];if(s.tiers.length<=1)return;s.tiers.splice(i,1);ptchSaveTiers(type);ptchRenderTiers(type);}
+function ptchResetTiers(type){ptchTierState[type].tiers=[...PTCH_DEFAULT];ptchSaveTiers(type);ptchRenderTiers(type);ptchLiveUpdate(type);}
+function ptchLiveUpdate(type){const garment=parseFloat(document.getElementById(`ptch-garment-${type}`).value)||0;const extra=parseFloat(document.getElementById(`ptch-extra-${type}`).value)||0;if(garment===0&&extra===0)return;ptchCalculate(type);}
+function ptchCalculate(type){
+  const garment=parseFloat(document.getElementById(`ptch-garment-${type}`).value)||0;
+  const extra=parseFloat(document.getElementById(`ptch-extra-${type}`).value)||0;
+  const size=document.getElementById(`ptch-size-${type}`).value;
+  const tiers=ptchTierState[type].tiers;
+  const label=PATCH_DATA[type].label;
+  ptchLastResults[type]=tiers.map((qty,idx)=>{const isLast=idx===tiers.length-1;const patchCost=getPatchCost(type,size,qty);const totalCost=garment+patchCost+extra;const margin=getSliding(PTCH_SLIDING,qty);const sellPP=mu(totalCost,margin);return{qty,isLast,margin,patchCost,totalCost,sellPP,jobTotal:sellPP*qty,marginDollar:(sellPP-totalCost)*qty};});
+  document.getElementById(`ptch-results-meta-${type}`).innerHTML=`${label} patch &nbsp;·&nbsp; ${size}${garment>0?` &nbsp;·&nbsp; garment ${fmt(garment)}/pc`:''}`;
+  document.getElementById(`ptch-empty-${type}`).style.display='none';
+  document.getElementById(`ptch-results-${type}`).style.display='block';
+  buildSummaryStrip(`ptch-summary-${type}`,ptchLastResults[type],'patchCost');
+  buildResultsTable(`ptch-table-${type}`,ptchLastResults[type],'Patch cost/pc','ptch',`ptchRecalcRow_${type}`);
+  const name=`${label} Patch Quote`;
+  buildBrandedPreview(`ptch-${type}-branded-preview`,name,ptchLastResults[type]);
+  document.getElementById(`ptch-copy-box-${type}`).textContent=buildPlainText(name,ptchLastResults[type]);
+  wirePlainSync(`ptch-${type}-branded-preview`,`ptch-copy-box-${type}`,ptchLastResults[type]);
+  const notes=[];if(garment===0)notes.push('No garment cost — patch cost only.');notes.push(`Patch pricing: Custom Patch Factory at ${size}.`);
+  document.getElementById(`ptch-note-${type}`).textContent=notes.join('  ·  ');
+}
+function ptchRecalcRow_woven(input){recalcRowGeneric(input,ptchLastResults.woven,'ptch-table-woven','ptch-woven-branded-preview','ptch-copy-box-woven');}
+function ptchRecalcRow_embroidered(input){recalcRowGeneric(input,ptchLastResults.embroidered,'ptch-table-embroidered','ptch-embroidered-branded-preview','ptch-copy-box-embroidered');}
+function ptchRecalcRow_sublimated(input){recalcRowGeneric(input,ptchLastResults.sublimated,'ptch-table-sublimated','ptch-sublimated-branded-preview','ptch-copy-box-sublimated');}
+function ptchToggleCopy(type){document.getElementById(`ptch-copy-area-${type}`).classList.toggle('visible');}
+function ptchSwitchCopyTab(type,tab,btn){document.getElementById(`ptch-copy-area-${type}`).querySelectorAll('.copy-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById(`ptch-copy-branded-${type}`).style.display=tab==='branded'?'block':'none';document.getElementById(`ptch-copy-plain-${type}`).style.display=tab==='plain'?'block':'none';}
+function ptchCopyBrandedHTML(type){
+  const preview=document.getElementById(`ptch-${type}-branded-preview`);
+  const clone=preview.cloneNode(true);const ed=clone.querySelector('[contenteditable]');if(ed){ed.removeAttribute('contenteditable');ed.style.borderBottom='none';}
+  const blob=new Blob([clone.innerHTML],{type:'text/html'});
+  navigator.clipboard.write([new ClipboardItem({'text/html':blob})]).then(()=>showCopied(`ptch-${type}`)).catch(()=>{const sel=window.getSelection();const r=document.createRange();r.selectNodeContents(preview);sel.removeAllRanges();sel.addRange(r);document.execCommand('copy');showCopied(`ptch-${type}`);});
+}
+function ptchCopyPlain(type){navigator.clipboard.writeText(document.getElementById(`ptch-copy-box-${type}`).textContent).then(()=>showCopied(`ptch-${type}`));}
+
+// ── ZOME REFERENCE ────────────────────────────────────────────────────────────
+let showRefCosts=true;
+function toggleRefCosts(){showRefCosts=!showRefCosts;document.getElementById('ref-toggle').textContent=showRefCosts?'show sell prices':'show Zome costs';renderRef();}
+function renderRef(){
+  const val=document.getElementById('ref-margin').value;const isSliding=val==='sliding';
+  const refQtys=isSliding?EMB_SLIDING.map(s=>s.qty):null;
+  const refLabels=isSliding?EMB_SLIDING.map(s=>`${s.qty} pcs`):ZOME_LABELS;
+  let html=`<thead><tr><th>Stitch tier</th>`;
+  refLabels.forEach((q,i)=>{const pct=isSliding?` <span style="opacity:.6;">(${Math.round(EMB_SLIDING[i].margin*100)}%)</span>`:'';html+=`<th>${q}${pct}</th>`;});
+  html+=`</tr></thead><tbody>`;
+  Object.entries(STITCH).forEach(([key,data])=>{
+    html+=`<tr><td>${key} — ${data.label}</td>`;
+    if(showRefCosts){if(isSliding){refQtys.forEach(qty=>{const c=getZomeCost(key,qty);html+=`<td style="font-family:var(--mono);font-size:11px;">${fmt(c)}</td>`;});}else{data.costs.forEach(c=>html+=`<td style="font-family:var(--mono);font-size:11px;">${fmt(c)}</td>`);}}
+    else{if(isSliding){refQtys.forEach((qty,i)=>{const m=EMB_SLIDING[i].margin;const c=getZomeCost(key,qty);html+=`<td style="color:var(--emb-accent-text);font-family:var(--mono);font-size:11px;">${fmt(mu(c,m))}</td>`;});}else{const m=parseFloat(val);data.costs.forEach(c=>html+=`<td style="color:var(--emb-accent-text);font-family:var(--mono);font-size:11px;">${fmt(mu(c,m))}</td>`);}}
+    html+=`</tr>`;
+  });
+  html+='</tbody>';document.getElementById('ref-table').innerHTML=html;
+}
+
+// ── ADD-ONS ───────────────────────────────────────────────────────────────────
+function renderAddons(){
+  const addons=[{name:'Digitizing — left chest',cost:45,unit:'per design',note:'One-time, new design'},{name:'Digitizing — full front/back',cost:75,unit:'per design',note:'Custom quote from Zome'},{name:'Digitizing edit',cost:10,unit:'per edit',note:''},{name:'Sew-out change',cost:10,unit:'per change',note:''},{name:'3D puff',cost:1.50,unit:'per piece',note:''},{name:'Metallic thread',cost:1.00,unit:'per piece',note:''},{name:'Personalization — 1 line',cost:6.00,unit:'per piece',note:''},{name:'Personalization — 2 lines',cost:8.00,unit:'per piece',note:''},{name:'Waterproof seal — left chest',cost:3.00,unit:'per piece',note:'Up to 5"×5"'},{name:'Waterproof seal — full front/back',cost:6.00,unit:'per piece',note:''},{name:'Thread color change',cost:10.00,unit:'per color',note:''},{name:'Sorting fee',cost:2.00,unit:'per box',note:''},{name:'Drop ship',cost:5.00,unit:'per location',note:''},{name:'Poly-bagging — apparel',cost:.60,unit:'per piece',note:'Includes bag'},{name:'Poly-bagging — jackets/sweatshirts',cost:1.00,unit:'per piece',note:'Includes bag'},{name:'Unpacking',cost:.15,unit:'per piece',note:'If goods arrive bagged/tagged'},{name:'Roller & golf',cost:3.00,unit:'per piece',note:''},{name:'Special hooping',cost:.75,unit:'per piece',note:'Bucket caps +$1.00'},{name:'Non-stock thread color',cost:50.00,unit:'one-time',note:'3–5 business days'}];
+  document.getElementById('addon-cards').innerHTML=addons.map(a=>`<div class="addon-card"><div class="addon-name">${a.name}</div>${a.note?`<div class="addon-sub">${a.note}</div>`:''}<div class="addon-sub">Zome: ${fmt(a.cost)} / ${a.unit}</div></div>`).join('');
+  const rush=[{l:'9 business days',p:10},{l:'8 business days',p:15},{l:'7 business days',p:20},{l:'6 business days',p:25},{l:'5 business days',p:35},{l:'4 business days',p:45},{l:'3 business days',p:50},{l:'2 business days',p:60},{l:'1 business day',p:75},{l:'Same day',p:100}];
+  document.getElementById('rush-cards').innerHTML=rush.map(r=>`<div class="addon-card"><div class="addon-name">${r.l}</div><div class="addon-sub">+${r.p}% on Zome base cost</div></div>`).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+lthLoadCosts();
+lthUpdateCostDisplay();
+renderRef();
+renderAddons();
+</script>
+</body>
+</html>
